@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Weather</title>
+    <link rel="stylesheet" href="./style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+
+</head>
+<body>
+    <header class="header">
+        <div class="logo">
+            WEATHER
+        </div>
+        <div class="search-box">
+            <input type="text" id="search" class="search-input">
+            <button id="btn" onclick="search()" class="search-btn">Search</button>
+            <div id="spinner" class="lds-ring d-none"><div></div><div></div><div></div></div>
+        </div>
+        <div id="city" class="city">
+            London
+        </div>
+    </header>
+    <section id="container" class="container">
+    </section>
+    <footer>
+        Max Formanchuk 2020
+    </footer>
+</body>
+
+<script>
+    const API = 'e0e763316f96e5d778ab8ecf7c95b8f2'; //ключ для доступу до апі
+    const defPoint = {
+      defLat: 51.51,
+      defLon: -0.13,
+    }
+
+    let loading = false
+
+    let input = ''
+
+    let container = document.getElementById('container')
+    let spinner = document.getElementById('spinner')
+
+    const dayOfWeek = (day) => {
+      switch (day) {
+        case 0:
+          return "Неділя";
+          break;
+        case 1:
+          return "Понеділок";
+          break;
+        case 2:
+          return "Вівторок";
+          break;
+        case 3:
+          return "Середа";
+          break;
+        case 4:
+          return "Четвер";
+          break;
+        case 5:
+          return "П'ятниця";
+          break;
+        case 6:
+          return "Субота";
+      }
+    }
+
+    const search = async () => {
+      spinner.classList.remove('d-none')
+      let valueInput = document.getElementById('search').value
+      try{
+        const fetchData = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${valueInput}&appid=${API}&units=metric&lang=ua`);
+        const data = await fetchData.json();
+        container.innerHTML = ''
+        await fetchWeather(data.coord.lat, data.coord.lon)
+        let city = document.getElementById('city')
+        city.textContent = `${data.name}`
+        spinner.classList.add('d-none')
+      }
+      catch (e){
+        console.log(e)
+        spinner.classList.add('d-none')
+        city.textContent = `City not found`
+      }
+
+    }
+
+    const fetchWeather = async (lat, lon) => {
+      const fetchData2 = await fetch(`https://api.openweathermap.org/data/2.5/onecall?lat=${lat}&lon=${lon}&appid=${API}&units=metric&lang=uk`);
+      const data2 = await fetchData2.json();
+
+      let day = data2.daily
+
+      day.forEach((el) => {
+        let dateDay = new Date(el.dt*1000).getDay();
+        let front = document.createElement('div')
+        let back = document.createElement('div')
+        let card = document.createElement('div')
+        let main = document.createElement('div')
+        let info = document.createElement('div')
+        let celsius = document.createElement('div')
+        let celsiusNight = document.createElement('div')
+        let date = document.createElement('div')
+        date.textContent = `${dayOfWeek(dateDay)}`
+        date.classList.add('day')
+        celsiusNight.textContent = `${Math.round(el.temp.min)}℃`
+        celsius.textContent = `${Math.round(el.temp.day)}℃`
+        celsius.classList.add('celsDay')
+        celsiusNight.classList.add('celsNight')
+        info.appendChild(celsius)
+        info.appendChild(celsiusNight)
+        info.classList.add('info')
+        main.classList.add('img-weather')
+        let img = document.createElement('img')
+        img.src = `http://openweathermap.org/img/wn/${el.weather[0].icon}@4x.png`
+        main.appendChild(img)
+        main.appendChild(date)
+        front.appendChild(main)
+        front.appendChild(info)
+        front.classList.add('front')
+        back.classList.add('back')
+        back.classList.add('colorBack')
+        back.innerHTML = `<div>
+            <h1>Температура:</h1>
+            <h2>День: <span>${Math.round(el.temp.day)}°</span></h2>
+            <h2>Ніч: <span>${Math.round(el.temp.night)}°</span></h2>
+        <h2>Вечір: <span>${Math.round(el.temp.eve)}°</span></h2>
+        <h2>Мінімум: <span>${Math.round(el.temp.min)}°</span></h2>
+        <h2>Максимум: <span>${Math.round(el.temp.max)}°</span></h2>
+        <h1>Відчувається як:</h1>
+        <h2>День: <span>${Math.round(el.feels_like.day)}°</span></h2>
+        <h2>Ніч: <span>${Math.round(el.feels_like.night)}°</span></h2>
+        <h2>Вечір: <span>${Math.round(el.feels_like.eve)}°</span></h2>
+        </div>`
+        card.appendChild(front)
+        card.appendChild(back)
+
+        card.classList.add('flipcard')
+        card.classList.add('h')
+        container.append(card)
+      })
+    }
+
+    fetchWeather(defPoint.defLat, defPoint.defLon)
+
+</script>
+</html>
